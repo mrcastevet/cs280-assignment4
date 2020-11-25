@@ -275,17 +275,35 @@ bool ExprList(istream& in, int& line) {
  */
 bool Expr(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
+    Value accumulator;
+    Value current;
+    int operation = -1;
+    // Might need two values here, one for ls one for rs but rethink -- maybe only one is needed
+
     while (true) {
-        if (Term(in, line, retVal)) {
+        if (Term(in, line, current)) {
             // ParseError(line, "Invalid Term Expression");
             return true;
+        }
+        else {
+            if (accumulator.IsErr())
+                accumulator = current;
+            else if (operation == 0)
+                accumulator = accumulator + current;
+            else if (operation == 1)
+                accumulator = accumulator - current;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
         if (item.GetToken() == ERR)
             errorsFound = true;
-        else if (item.GetToken() != PLUS && item.GetToken() != MINUS) {
+        else if (item.GetToken() == PLUS)
+            operation = 0;
+        else if (item.GetToken() == MINUS)
+            operation = 1;
+        else {
             Parser::PushBackToken(item);
+            retVal = accumulator;
             return errorsFound;
         }
     }
