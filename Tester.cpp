@@ -8,8 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include "parseRun.h"
 #include "val.h"
+#include "parseRun.h"
 
 bool g_valCheck = false;
 
@@ -148,8 +148,8 @@ bool IfStmt(istream& in, int& line) {
         ParseError(line, "Missing Left Parenthesis");
         errorsFound = true;
     }
-
-    if (Expr(in, line)) {
+    Value expressionValue;
+    if (Expr(in, line, expressionValue)) {
         // ParseError(line, "Invalid if statement Expression");
         errorsFound = true;
     }
@@ -199,7 +199,8 @@ bool AssignStmt(istream& in, int& line) {
     }
 
     // Check for assignment value type. If true symbol assignment starts assuming no other errors
-    if (Expr(in, line, tok)) {
+    Value val;
+    if (Expr(in, line, val)) {
         ParseError(currentLine, "Invalid Assignment Statement Expression");
         errorsFound = true;
     }
@@ -254,7 +255,8 @@ bool ExprList(istream& in, int& line) {
     }
 
     while (true) {
-        if (Expr(in, line)) {
+        Value value;
+        if (Expr(in, line, value)) {
             // ParseError(line, "Invalid Print Statement Expression List");
             return true;
         }
@@ -273,7 +275,7 @@ bool ExprList(istream& in, int& line) {
 /**
  * Basic level of expression with + and - operations
  */
-bool Expr(istream& in, int& line, Value &retVal) {
+bool Expr(istream& in, int& line, Value & retVal) {
     bool errorsFound = false;
     Value accumulator;
     Value current;
@@ -313,25 +315,41 @@ bool Expr(istream& in, int& line, Value &retVal) {
 /**
  * Higher Precedence expression with * and / 
  */
-bool Term(istream& in, int& line, Value &retVal) {
+bool Term(istream& in, int& line, Value & retVal) {
     bool errorsFound = false;
-    // use this value to calcualte the total value of ret
-    Value total();
+    Value accumulator;
+    Value current;
+    int operation = -1;
+    // Might need two values here, one for ls one for rs but rethink -- maybe only one is needed
+    // Just assuming logic from Expr works and applying it to term as well
     while (true) {
-        if (Factor(in, line, total)) {
-            // ParseError(line, "Invalid Factor Expression");
+        if (Factor(in, line, current)) {
+            // ParseError(line, "Invalid Term Expression");
             return true;
+        }
+        else {
+            if (accumulator.IsErr())
+                accumulator = current;
+            else if (operation == 0)
+                accumulator = accumulator * current;
+            else if (operation == 1)
+                accumulator = accumulator / current;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
         if (item.GetToken() == ERR)
             errorsFound = true;
-        else if (item.GetToken() != MULT && item.GetToken() != DIV) {
+        else if (item.GetToken() == MULT)
+            operation = 0;
+        else if (item.GetToken() == DIV)
+            operation = 1;
+        else {
             Parser::PushBackToken(item);
+            retVal = accumulator;
             return errorsFound;
         }
     }
-    return errorsFound; 
+    return errorsFound;  
 }
 
 /**
@@ -382,7 +400,7 @@ bool Factor(istream& in, int& line, Value &retVal) {
             return true;
         case IDENT:
             Parser::PushBackToken(item);
-            return Var(in, line);
+            return Var(in, line, item);
         case ICONST:
             g_valCheck = false;
             return false;
@@ -394,7 +412,7 @@ bool Factor(istream& in, int& line, Value &retVal) {
             return false;
         case LPAREN:
             g_valCheck = false;
-            if (Expr(in, line)) {
+            if (Expr(in, line, retVal)) {
                 // ParseError(line, "Invalid Expression Statement");
                 errorsFound = true;
             }
