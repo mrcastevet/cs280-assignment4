@@ -22,14 +22,36 @@ public:
     Value(string vs) : T(VSTR), I(0), R(0.0), S(vs) {}
     
     ValType GetType() const { return T; }
-    bool IsErr() const { return T == VERR; }
-    bool IsInt() const { return T == VINT; }
-    bool IsStr() const { return T == VSTR; }
-    bool IsReal() const {return T == VREAL;}
+    bool IsErr() const { 
+		return T == VERR; 
+	}
+    bool IsInt() const { 
+		return T == VINT; 
+	}
+    bool IsStr() const { 
+		return T == VSTR; 
+	}
+    bool IsReal() const {
+		return T == VREAL;
+	}
     
-    int GetInt() const { if( IsInt() ) return I; throw "RUNTIME ERROR: Value not an integer"; }
-    string GetStr() const { if( IsStr() ) return S; throw "RUNTIME ERROR: Value not a string"; }
-    float GetReal() const { if( IsReal() ) return R; throw "RUNTIME ERROR: Value not an integer"; }
+    int GetInt() const { 
+		if(IsInt()) 
+			return I; 
+		throw "RUNTIME ERROR: Value not an integer"; 
+	}
+
+    string GetStr() const { 
+		if(IsStr()) 
+			return S; 
+		throw "RUNTIME ERROR: Value not a string";
+	}
+
+    float GetReal() const { 
+		if(IsReal()) 
+			return R; 
+		throw "RUNTIME ERROR: Value not an integer"; 
+	}
         
     // add op to this
     Value operator+(const Value& op) const;
@@ -44,100 +66,80 @@ public:
     Value operator/(const Value& op) const;
     
     friend ostream& operator<<(ostream& out, const Value& op) {
-        if( op.IsInt() ) out << op.I;
-        else if( op.IsStr() ) out << op.S;
-        else if( op.IsReal()) out << op.R;
-        else out << "ERROR";
+        if(op.IsInt()) 
+			out << op.I;
+        else if(op.IsStr()) 
+			out << op.S;
+        else if(op.IsReal()) 
+			out << op.R;
+        else 
+			out << "ERROR";
         return out;
     }
 };
 
 // add this with op 
     Value Value::operator+(const Value& op) const {
-        if( GetType() == op.GetType() )
-        {
-        	if( IsInt() ) return Value( I + op.GetInt() );
-        	if( IsReal() ) return Value( R + op.GetReal() );
+        if(GetType() == op.GetType()) {
+        	if(IsInt()) 
+				return Value(I + op.GetInt());
+        	if(IsReal()) 
+				return Value(R + op.GetReal());
 		}
 		else if(IsInt() && op.IsReal())
-		{
-			
 			return Value( (float) GetInt() + op.GetReal());
-		}
 		else if(IsReal() && op.IsInt())
-		{
 			return Value(GetReal() + (float) op.GetInt());
-		}
 		else
-		{
 			return Value(VERR);
-		}
     }
     
     // subtract op from this
     Value Value::operator-(const Value& op) const {
-        if( GetType() == op.GetType() )
-        {
-        	if( IsInt() ) return Value( I - op.GetInt() );
-        	if( IsReal() ) return Value( R - op.GetReal() );
+        if(GetType() == op.GetType()) {
+        	if(IsInt()) 
+				return Value(I - op.GetInt());
+        	if(IsReal()) 
+				return Value(R - op.GetReal());
 		}
 		else if(IsInt() && op.IsReal())
-		{
-			
 			return Value( (float) GetInt() - op.GetReal());
-		}
 		else if(IsReal() && op.IsInt())
-		{
 			return Value(GetReal() - (float) op.GetInt());
-		}
 		else
-		{
 			return Value(VERR);
-		}
     }
     
     // multiply this with op
     Value Value::operator*(const Value& op) const {
-        if( GetType() == op.GetType() )
-        {
-        	if( IsInt() ) return Value( I * op.GetInt() );
-        	if( IsReal() ) return Value( R * op.GetReal() );
+        if(GetType() == op.GetType()) {
+        	if(IsInt()) 
+				return Value(I * op.GetInt());
+        	if(IsReal()) 
+				return Value(R * op.GetReal());
 		}
 		else if(IsInt() && op.IsReal())
-		{
-			
 			return Value( (float) GetInt() * op.GetReal());
-		}
 		else if(IsReal() && op.IsInt())
-		{
 			return Value(GetReal() * (float) op.GetInt());
-		}
 		else
-		{
 			return Value(VERR);
-		}
     }
     
     // divide this by op
     Value Value::operator/(const Value& op) const {
-        if( GetType() == op.GetType() )
-        {
-        	if( IsInt() ) return Value( I / op.GetInt() );
-        	if( IsReal() ) return Value( R / op.GetReal() );
+        if(GetType() == op.GetType()) {
+        	if(IsInt()) 
+				return Value(I / op.GetInt());
+        	if(IsReal()) 
+				return Value(R / op.GetReal());
 		}
 		else if(IsInt() && op.IsReal())
-		{
-			
 			return Value( (float) GetInt() / op.GetReal());
-		}
 		else if(IsReal() && op.IsInt())
-		{
-			return Value(GetReal() / ((float) op.GetInt()));
-		}
+			return Value(GetReal() / (float) op.GetInt());
 		else
-		{
 			return Value(VERR);
-		}
     }
 
 map<string, Value> symbolTable; //symbol Table of variable names and Value objects
