@@ -181,21 +181,56 @@ bool IfStmt(istream& in, int& line) {
 bool AssignStmt(istream& in, int& line) {
     const int currentLine = line;
     bool errorsFound = false;
-    if (Var(in, line)) {
+    LexItem tok;
+    std::string identifier = "";
+    
+    // Check if var is valid, if so store the lexeme as an identifier to be used for assignment
+    if (Var(in, line, tok)) {
         ParseError(currentLine, "Invalid Assignment Statement Identifier");
         errorsFound = true;
     }
-        
+    else 
+        identifier = tok.GetLexeme();
+       
     LexItem item = Parser::GetNextToken(in, line);
     if (item.GetToken() != EQ) {
         ParseError(currentLine, "Missing Assignment Operator =");
         errorsFound = true;
     }
 
-    if (Expr(in, line)) {
+    // Check for assignment value type. If true symbol assignment starts assuming no other errors
+    if (Expr(in, line, tok)) {
         ParseError(currentLine, "Invalid Assignment Statement Expression");
         errorsFound = true;
     }
+
+    if (!errorsFound && identifier != "") {
+        // If the var doesn't exist in symbolTable just set its value
+        if (symbolTable.find(identifier) == symbolTable.end()) {
+            if (tok.GetToken() == ICONST)
+                symbolTable.insert(std::make_pair(identifier, Value(std::stoi(tok.GetLexeme()))));
+            else if (tok.GetToken() == RCONST)
+                symbolTable.insert(std::make_pair(identifier, Value(std::stof(tok.GetLexeme()))));
+            else
+                symbolTable.insert(std::make_pair(identifier, Value(tok.GetLexeme())));
+        }
+        // If the var exists the value has to be checked for runtime assignment errors
+        else {
+            Token varType = tok.GetToken();
+            Value& actualType = symbolTable.find(identifier)->second;
+            if (varType == ICONST && actualType.IsInt()) 
+                symbolTable[identifier] = Value(std::stoi(tok.GetLexeme()));
+            else if (varType == RCONST && actualType.IsReal())
+                symbolTable[identifier] = Value(std::stof(tok.GetLexeme()));
+            else if (varType == SCONST && actualType.IsStr())
+                symbolTable[identifier] = Value(tok.GetLexeme());
+            else {
+                ParseError(currentLine, "Run-Time: Illegal Type Reassignment");
+                errorsFound = true;
+            }
+        }
+    }
+    
     item = Parser::GetNextToken(in, line);
     if (item.GetToken() != SCOMA) {
         Parser::PushBackToken(item);
@@ -241,7 +276,7 @@ bool ExprList(istream& in, int& line) {
 bool Expr(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
     while (true) {
-        if (Term(in, line)) {
+        if (Term(in, line, retVal)) {
             // ParseError(line, "Invalid Term Expression");
             return true;
         }
@@ -262,8 +297,10 @@ bool Expr(istream& in, int& line, Value &retVal) {
  */
 bool Term(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
+    // use this value to calcualte the total value of ret
+    Value total();
     while (true) {
-        if (Factor(in, line)) {
+        if (Factor(in, line, total)) {
             // ParseError(line, "Invalid Factor Expression");
             return true;
         }
@@ -286,6 +323,7 @@ bool Term(istream& in, int& line, Value &retVal) {
  */
 bool Var(istream& in, int& line, LexItem &tok) {
     LexItem item = Parser::GetNextToken(in, line);
+    tok = item;
     if (item.GetToken() == IDENT) {
         if (defVar.find(item.GetLexeme()) != defVar.end()) {
             defVar[item.GetLexeme()] = false;
