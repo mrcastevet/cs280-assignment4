@@ -90,8 +90,7 @@ public:
 			return Value( (float) GetInt() + op.GetReal());
 		else if(IsReal() && op.IsInt())
 			return Value(GetReal() + (float) op.GetInt());
-		else
-			return Value(VERR);
+		return Value(VERR);
     }
     
     // subtract op from this
@@ -106,8 +105,7 @@ public:
 			return Value( (float) GetInt() - op.GetReal());
 		else if(IsReal() && op.IsInt())
 			return Value(GetReal() - (float) op.GetInt());
-		else
-			return Value(VERR);
+		return Value(VERR);
     }
     
     // multiply this with op
@@ -122,8 +120,7 @@ public:
 			return Value( (float) GetInt() * op.GetReal());
 		else if(IsReal() && op.IsInt())
 			return Value(GetReal() * (float) op.GetInt());
-		else
-			return Value(VERR);
+		return Value(VERR);
     }
     
     // divide this by op
@@ -138,8 +135,7 @@ public:
 			return Value( (float) GetInt() / op.GetReal());
 		else if(IsReal() && op.IsInt())
 			return Value(GetReal() / (float) op.GetInt());
-		else
-			return Value(VERR);
+		return Value(VERR);
     }
 
 map<string, Value> symbolTable; //symbol Table of variable names and Value objects
