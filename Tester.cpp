@@ -7,8 +7,9 @@
 
 #include <iostream>
 #include <fstream>
-#include "parse.h"
 #include <map>
+#include "parseRun.h"
+#include "val.h"
 
 bool g_valCheck = false;
 
@@ -237,7 +238,7 @@ bool ExprList(istream& in, int& line) {
 /**
  * Basic level of expression with + and - operations
  */
-bool Expr(istream& in, int& line) {
+bool Expr(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
     while (true) {
         if (Term(in, line)) {
@@ -259,7 +260,7 @@ bool Expr(istream& in, int& line) {
 /**
  * Higher Precedence expression with * and / 
  */
-bool Term(istream& in, int& line) {
+bool Term(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
     while (true) {
         if (Factor(in, line)) {
@@ -283,7 +284,7 @@ bool Term(istream& in, int& line) {
  * g_valCheck is used with statements to check
  * if value is defined or not 
  */
-bool Var(istream& in, int& line) {
+bool Var(istream& in, int& line, LexItem &tok) {
     LexItem item = Parser::GetNextToken(in, line);
     if (item.GetToken() == IDENT) {
         if (defVar.find(item.GetLexeme()) != defVar.end()) {
@@ -311,7 +312,7 @@ bool Var(istream& in, int& line) {
  * Most basic level of expression - breaks into basic components
  * of the grammar 
  */
-bool Factor(istream& in, int& line) {
+bool Factor(istream& in, int& line, Value &retVal) {
     LexItem item = Parser::GetNextToken(in, line);
     bool errorsFound = false;
     const int lineNumber = item.GetLinenum();
