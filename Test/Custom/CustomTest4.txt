@@ -1,0 +1,18 @@
+// Checking variable reassingment within an if statement
+
+begin
+
+    r = 4;
+    print r;
+    r = 12;
+    print r;
+    r = 92;
+    print r;
+    r = 32;
+    print r;
+    r = 81;
+    print r;
+    r = 12.3;
+    print r;
+    
+end
