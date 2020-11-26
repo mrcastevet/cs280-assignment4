@@ -11,8 +11,11 @@
 #include "val.h"
 #include "parseRun.h"
 
+// Check if value has been seen before
 bool g_valCheck = false;
+// Check if printing is allowed (no errors detected)
 bool g_print = true;
+// Check if an if statement expression should be allowed to run
 bool g_allow = true;
 
 int main(int argc, char** argv) {
@@ -128,6 +131,7 @@ bool PrintStmt(istream& in, int& line) {
         ParseError(lineNumber, "Invalid Print Statement Expression");
         line++;
 
+        // Memory has to be deleted
         while(!(*ValQue).empty()){
             ValQue->pop();
         }
@@ -135,19 +139,14 @@ bool PrintStmt(istream& in, int& line) {
         return true;
     }
 
-    LexItem item = Parser::GetNextToken(in, line);
-    // std::cout << "Should we print? " << g_print << std::endl;
-    // std::cout << "What is the parser?" << item << std::endl;
+    // Print values to screen left to right
     if (g_print && g_allow) {
-        // std::cout << "\n=== PRINTING ===" << std::endl;
         while (g_print && !(*ValQue).empty()) {
             std::cout << ValQue->front();
             ValQue->pop();
         }
         std::cout << std::endl;
-        // std::cout << "\n=== PRINTING ===\n" << std::endl;
     }
-    Parser::PushBackToken(item);
     g_allow = true;
     return false;
 }
@@ -178,10 +177,6 @@ bool IfStmt(istream& in, int& line) {
     }
 
     if (!expressionValue.IsInt()) {
-        // std::cout << expressionValue.IsInt() << std::endl;
-        // std::cout << expressionValue.IsReal() << std::endl;
-        // std::cout << expressionValue.IsStr() << std::endl;
-        // std::cout << expressionValue.IsErr() << std::endl;
         ParseError(line, "Run-Time: Non Integer If Statement Expression");
         errorsFound = true;
     }
@@ -250,8 +245,6 @@ bool AssignStmt(istream& in, int& line) {
         ParseError(currentLine, "Invalid Assignment Statement Expression");
         errorsFound = true;
     }
-    // std::cout << "Assignment Value: " << val << std::endl;
-    // std::cout << std::endl;
 
     if (!errorsFound && identifier != "" && g_allow) {
         // If the var doesn't exist in symbolTable just set its value
@@ -262,8 +255,12 @@ bool AssignStmt(istream& in, int& line) {
         else {
             Value& actualType = symbolTable.find(identifier)->second;
 
+            // Check actual value against new value for reassignment
+            // Int and real numbers can actually be reassigned value types
             if (actualType.IsInt() && val.IsInt() || actualType.IsReal() && val.IsReal()
                 || actualType.IsStr() && val.IsStr())
+                symbolTable[identifier] = val;
+            else if (actualType.IsInt() && val.IsReal() || actualType.IsReal() && val.IsInt())
                 symbolTable[identifier] = val;
             else {
                 ParseError(currentLine, "Run-Time: Illegal Type Reassignment");
@@ -326,7 +323,6 @@ bool Expr(istream& in, int& line, Value & retVal) {
     Value accumulator;
     Value current;
     int operation = -1;
-    // Might need two values here, one for ls one for rs but rethink -- maybe only one is needed
 
     while (true) {
         if (Term(in, line, current)) {
@@ -334,7 +330,7 @@ bool Expr(istream& in, int& line, Value & retVal) {
             return true;
         }
         else {
-            // std::cout << "Expression Current: " << current << std::endl;
+            // Create a single total value and pass it on using references
             if (accumulator.IsErr())
                 accumulator = current;
             else if (operation == 0) {
@@ -353,8 +349,6 @@ bool Expr(istream& in, int& line, Value & retVal) {
                 else
                     accumulator = accumulator - current;
             }
-            // std::cout << "Expression Accumulater: " << current << std::endl;
-            // std::cout << std::endl;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
@@ -381,15 +375,13 @@ bool Term(istream& in, int& line, Value & retVal) {
     Value accumulator;
     Value current;
     int operation = -1;
-    // Might need two values here, one for ls one for rs but rethink -- maybe only one is needed
-    // Just assuming logic from Expr works and applying it to term as well
     while (true) {
         if (Factor(in, line, current)) {
             // ParseError(line, "Invalid Term Expression");
             return true;
         }
         else {
-            // std::cout << "Term Current: " << current << std::endl;
+            // Create a single total value and pass it on using references
             if (accumulator.IsErr())
                 accumulator = current;
             else if (operation == 0) {
@@ -409,8 +401,6 @@ bool Term(istream& in, int& line, Value & retVal) {
                 else
                     accumulator = accumulator / current;
             }
-            // std::cout << "Term Accumulater: " << current << std::endl;
-            // std::cout << std::endl;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
@@ -468,13 +458,6 @@ bool Factor(istream& in, int& line, Value &retVal) {
     bool errorsFound = false;
     const int lineNumber = item.GetLinenum();
 
-    auto iterator = symbolTable.begin();
-    while (iterator != symbolTable.end()) {
-        // std::cout << "Symbol: " << iterator->first << " " << iterator->second << std::endl;
-        iterator++;
-    }
-
-
     switch (item.GetToken()) {
         case ERR:
             item = Parser::GetNextToken(in, line);
@@ -514,4 +497,5 @@ bool Factor(istream& in, int& line, Value &retVal) {
                 return true;
             }
     }
+    return true;
 }
