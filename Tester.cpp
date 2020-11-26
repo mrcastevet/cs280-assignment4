@@ -133,7 +133,11 @@ bool PrintStmt(istream& in, int& line) {
         delete ValQue;
         return true;
     }
-    else {
+
+    LexItem item = Parser::GetNextToken(in, line);
+    // std::cout << "Should we print? " << g_print << std::endl;
+    // std::cout << "What is the parser?" << item << std::endl;
+    if (g_print) {
         // std::cout << "\n=== PRINTING ===" << std::endl;
         while (g_print && !(*ValQue).empty()) {
             std::cout << ValQue->front();
@@ -142,6 +146,7 @@ bool PrintStmt(istream& in, int& line) {
         std::cout << std::endl;
         // std::cout << "\n=== PRINTING ===\n" << std::endl;
     }
+    Parser::PushBackToken(item);
     return false;
 }
 
@@ -191,10 +196,19 @@ bool IfStmt(istream& in, int& line) {
         errorsFound = true;
     }
 
+    // Check for errors before if statement's statement is evaluted.
+    if (errorsFound)
+        g_print = false;
+
     if (Stmt(in, line)) {
         ParseError(line, "Invalid If Statement Expression");
         errorsFound = true;
     }
+
+    // Also check for errors after if statement's statement just in case
+    if (errorsFound)
+        g_print = false;
+
     return errorsFound;
 }
 
@@ -260,6 +274,9 @@ bool AssignStmt(istream& in, int& line) {
         ParseError(currentLine, "Missing Semicolon");
         errorsFound = true;
     }
+
+    if (errorsFound)
+        g_print = false;
     return errorsFound; 
 }
 
@@ -290,7 +307,7 @@ bool ExprList(istream& in, int& line) {
             if (item.GetToken() == SCOMA)
                 return errorsFound;
             Parser::PushBackToken(item);
-            return errorsFound;
+            return true;
         }
     }
     return errorsFound; 
@@ -317,7 +334,7 @@ bool Expr(istream& in, int& line, Value & retVal) {
                 accumulator = current;
             else if (operation == 0) {
                 if (accumulator.IsStr() || current.IsStr()) {
-                    ParseError(line, "Run-Time: Invalid4 Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
                     errorsFound = true;
                 }
                 else
@@ -325,7 +342,7 @@ bool Expr(istream& in, int& line, Value & retVal) {
             }
             else if (operation == 1) {
                 if (accumulator.IsStr() || current.IsStr()) {
-                    ParseError(line, "Run-Time: Invalid3 Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
                     errorsFound = true;
                 }
                 else
@@ -373,7 +390,7 @@ bool Term(istream& in, int& line, Value & retVal) {
             else if (operation == 0) {
                 if (accumulator.IsStr() || current.IsStr()) {
                     std::cout << "Expression " << accumulator << " : " << current << std::endl;
-                    ParseError(line, "Run-Time: Invalid2 Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
                     errorsFound = true;
                 }
                 else
@@ -381,7 +398,7 @@ bool Term(istream& in, int& line, Value & retVal) {
             }
             else if (operation == 1) {
                 if (accumulator.IsStr() || current.IsStr()) {
-                    ParseError(line, "Run-Time: Invalid1 Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
                     errorsFound = true;
                 }
                 else
