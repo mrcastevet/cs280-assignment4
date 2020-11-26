@@ -260,8 +260,10 @@ bool AssignStmt(istream& in, int& line) {
             if (actualType.IsInt() && val.IsInt() || actualType.IsReal() && val.IsReal()
                 || actualType.IsStr() && val.IsStr())
                 symbolTable[identifier] = val;
-            else if (actualType.IsInt() && val.IsReal() || actualType.IsReal() && val.IsInt())
-                symbolTable[identifier] = val;
+            else if (actualType.IsInt() && val.IsReal())
+                symbolTable[identifier] = Value((int) val.GetReal());
+            else if (actualType.IsReal() && val.IsInt())
+                symbolTable[identifier] = Value((float) val.GetInt());
             else {
                 ParseError(currentLine, "Run-Time: Illegal Type Reassignment");
                 errorsFound = true;
