@@ -513,7 +513,5 @@ bool Factor(istream& in, int& line, Value &retVal) {
                 ParseError(line, "Missing Right Parenthesis");
                 return true;
             }
-        default:
-            return true;
     }
 }
