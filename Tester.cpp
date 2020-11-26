@@ -13,7 +13,7 @@
 
 bool g_valCheck = false;
 bool g_print = true;
-bool g_lprint = true;
+bool g_allow = true;
 
 int main(int argc, char** argv) {
     if (argc == 2) {
@@ -138,7 +138,7 @@ bool PrintStmt(istream& in, int& line) {
     LexItem item = Parser::GetNextToken(in, line);
     // std::cout << "Should we print? " << g_print << std::endl;
     // std::cout << "What is the parser?" << item << std::endl;
-    if (g_print && g_lprint) {
+    if (g_print && g_allow) {
         // std::cout << "\n=== PRINTING ===" << std::endl;
         while (g_print && !(*ValQue).empty()) {
             std::cout << ValQue->front();
@@ -148,7 +148,7 @@ bool PrintStmt(istream& in, int& line) {
         // std::cout << "\n=== PRINTING ===\n" << std::endl;
     }
     Parser::PushBackToken(item);
-    g_lprint = true;
+    g_allow = true;
     return false;
 }
 
@@ -187,7 +187,7 @@ bool IfStmt(istream& in, int& line) {
     }
     else {
         if (expressionValue.GetInt() == 0)
-            g_lprint = false;
+            g_allow = false;
 
     }
 
@@ -253,20 +253,17 @@ bool AssignStmt(istream& in, int& line) {
     // std::cout << "Assignment Value: " << val << std::endl;
     // std::cout << std::endl;
 
-    if (!errorsFound && identifier != "") {
+    if (!errorsFound && identifier != "" && g_allow) {
         // If the var doesn't exist in symbolTable just set its value
         if (symbolTable.find(identifier) == symbolTable.end()) {
             symbolTable.insert(std::make_pair(identifier, val));
         }
         // If the var exists the value has to be checked for runtime assignment errors
         else {
-            Token varType = tok.GetToken();
             Value& actualType = symbolTable.find(identifier)->second;
-            if (varType == ICONST && actualType.IsInt()) 
-                symbolTable[identifier] = val;
-            else if (varType == RCONST && actualType.IsReal())
-                symbolTable[identifier] = val;
-            else if (varType == SCONST && actualType.IsStr())
+
+            if (actualType.IsInt() && val.IsInt() || actualType.IsReal() && val.IsReal()
+                || actualType.IsStr() && val.IsStr())
                 symbolTable[identifier] = val;
             else {
                 ParseError(currentLine, "Run-Time: Illegal Type Reassignment");
@@ -284,6 +281,7 @@ bool AssignStmt(istream& in, int& line) {
 
     if (errorsFound)
         g_print = false;
+    g_allow = true;
     return errorsFound; 
 }
 
