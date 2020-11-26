@@ -27,12 +27,12 @@ int main(int argc, char** argv) {
             bool errorsFound = Prog(file, lineNumber);
             std::cout << std::endl;
             if (errorsFound) {
-                std::cout << "Unsuccessful Parsing" << std::endl;
+                std::cout << "Unsuccessful Execution" << std::endl;
                 std::cout << std::endl;
                 std::cout << "Number of Syntax Errors: " << error_count << std::endl;
             }
             else
-                std::cout << "Successful Parsing" << std::endl;
+                std::cout << "Successful Execution" << std::endl;
         }
         else {
             std::cout << "CANNOT OPEN FILE " << argv[1] << std::endl;
@@ -301,7 +301,7 @@ bool ExprList(istream& in, int& line) {
         Value value;
         if (Expr(in, line, value)) {
             // ParseError(line, "Invalid Print Statement Expression List");
-            return true;
+            errorsFound = true;
         }
         else
             ValQue->push(value);
@@ -438,6 +438,7 @@ bool Var(istream& in, int& line, LexItem &tok) {
             if (g_valCheck) {
                 ParseError(line, "Undefined variable used in expression");
                 g_valCheck = false;
+                g_print = false;
                 return true;
             }
             defVar[item.GetLexeme()] = true;
@@ -470,8 +471,10 @@ bool Factor(istream& in, int& line, Value &retVal) {
             return true;
         case IDENT:
             Parser::PushBackToken(item);
+            if (Var(in, line, item))
+                return true;
             retVal = symbolTable[item.GetLexeme()];
-            return Var(in, line, item);
+            return false;
         case ICONST:
             g_valCheck = false;
             retVal = Value(std::stoi(item.GetLexeme()));
