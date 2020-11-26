@@ -336,8 +336,9 @@ bool Expr(istream& in, int& line, Value & retVal) {
             if (accumulator.IsErr())
                 accumulator = current;
             else if (operation == 0) {
+                // Because String operations aren't supported error is generated
                 if (accumulator.IsStr() || current.IsStr()) {
-                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid String Operation");
                     errorsFound = true;
                 }
                 else
@@ -387,9 +388,9 @@ bool Term(istream& in, int& line, Value & retVal) {
             if (accumulator.IsErr())
                 accumulator = current;
             else if (operation == 0) {
+                // Because String operations aren't supported error is generated
                 if (accumulator.IsStr() || current.IsStr()) {
-                    std::cout << "Expression " << accumulator << " : " << current << std::endl;
-                    ParseError(line, "Run-Time: Invalid Arithmetic Operation");
+                    ParseError(line, "Run-Time: Invalid String Operation");
                     errorsFound = true;
                 }
                 else
