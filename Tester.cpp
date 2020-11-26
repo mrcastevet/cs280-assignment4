@@ -12,6 +12,7 @@
 #include "parseRun.h"
 
 bool g_valCheck = false;
+bool g_print = true;
 
 int main(int argc, char** argv) {
     if (argc == 2) {
@@ -120,11 +121,26 @@ bool Stmt(istream& in, int& line) {
 bool PrintStmt(istream& in, int& line) {
     const int lineNumber = line;
     g_valCheck = true;
+    ValQue = new queue<Value>;
     // Increase line count if print statement is incorrect
     if (ExprList(in, line)) {
         ParseError(lineNumber, "Invalid Print Statement Expression");
         line++;
+
+        while(!(*ValQue).empty()){
+            ValQue->pop();
+        }
+        delete ValQue;
         return true;
+    }
+    else {
+        // std::cout << "\n=== PRINTING ===" << std::endl;
+        while (g_print && !(*ValQue).empty()) {
+            std::cout << ValQue->front();
+            ValQue->pop();
+        }
+        std::cout << std::endl;
+        // std::cout << "\n=== PRINTING ===\n" << std::endl;
     }
     return false;
 }
@@ -151,6 +167,15 @@ bool IfStmt(istream& in, int& line) {
     Value expressionValue;
     if (Expr(in, line, expressionValue)) {
         // ParseError(line, "Invalid if statement Expression");
+        errorsFound = true;
+    }
+
+    if (!expressionValue.IsInt()) {
+        // std::cout << expressionValue.IsInt() << std::endl;
+        // std::cout << expressionValue.IsReal() << std::endl;
+        // std::cout << expressionValue.IsStr() << std::endl;
+        // std::cout << expressionValue.IsErr() << std::endl;
+        ParseError(line, "Run-Time: Non Integer If Statement Expression");
         errorsFound = true;
     }
 
@@ -204,27 +229,24 @@ bool AssignStmt(istream& in, int& line) {
         ParseError(currentLine, "Invalid Assignment Statement Expression");
         errorsFound = true;
     }
+    // std::cout << "Assignment Value: " << val << std::endl;
+    // std::cout << std::endl;
 
     if (!errorsFound && identifier != "") {
         // If the var doesn't exist in symbolTable just set its value
         if (symbolTable.find(identifier) == symbolTable.end()) {
-            if (tok.GetToken() == ICONST)
-                symbolTable.insert(std::make_pair(identifier, Value(std::stoi(tok.GetLexeme()))));
-            else if (tok.GetToken() == RCONST)
-                symbolTable.insert(std::make_pair(identifier, Value(std::stof(tok.GetLexeme()))));
-            else
-                symbolTable.insert(std::make_pair(identifier, Value(tok.GetLexeme())));
+            symbolTable.insert(std::make_pair(identifier, val));
         }
         // If the var exists the value has to be checked for runtime assignment errors
         else {
             Token varType = tok.GetToken();
             Value& actualType = symbolTable.find(identifier)->second;
             if (varType == ICONST && actualType.IsInt()) 
-                symbolTable[identifier] = Value(std::stoi(tok.GetLexeme()));
+                symbolTable[identifier] = val;
             else if (varType == RCONST && actualType.IsReal())
-                symbolTable[identifier] = Value(std::stof(tok.GetLexeme()));
+                symbolTable[identifier] = val;
             else if (varType == SCONST && actualType.IsStr())
-                symbolTable[identifier] = Value(tok.GetLexeme());
+                symbolTable[identifier] = val;
             else {
                 ParseError(currentLine, "Run-Time: Illegal Type Reassignment");
                 errorsFound = true;
@@ -260,6 +282,8 @@ bool ExprList(istream& in, int& line) {
             // ParseError(line, "Invalid Print Statement Expression List");
             return true;
         }
+        else
+            ValQue->push(value);
         item = Parser::GetNextToken(in, line);
 
         if (item.GetToken() != COMA) {
@@ -288,12 +312,27 @@ bool Expr(istream& in, int& line, Value & retVal) {
             return true;
         }
         else {
+            // std::cout << "Expression Current: " << current << std::endl;
             if (accumulator.IsErr())
                 accumulator = current;
-            else if (operation == 0)
-                accumulator = accumulator + current;
-            else if (operation == 1)
-                accumulator = accumulator - current;
+            else if (operation == 0) {
+                if (accumulator.IsStr() || current.IsStr()) {
+                    ParseError(line, "Run-Time: Invalid4 Arithmetic Operation");
+                    errorsFound = true;
+                }
+                else
+                    accumulator = accumulator + current;
+            }
+            else if (operation == 1) {
+                if (accumulator.IsStr() || current.IsStr()) {
+                    ParseError(line, "Run-Time: Invalid3 Arithmetic Operation");
+                    errorsFound = true;
+                }
+                else
+                    accumulator = accumulator - current;
+            }
+            // std::cout << "Expression Accumulater: " << current << std::endl;
+            // std::cout << std::endl;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
@@ -328,12 +367,28 @@ bool Term(istream& in, int& line, Value & retVal) {
             return true;
         }
         else {
+            // std::cout << "Term Current: " << current << std::endl;
             if (accumulator.IsErr())
                 accumulator = current;
-            else if (operation == 0)
-                accumulator = accumulator * current;
-            else if (operation == 1)
-                accumulator = accumulator / current;
+            else if (operation == 0) {
+                if (accumulator.IsStr() || current.IsStr()) {
+                    std::cout << "Expression " << accumulator << " : " << current << std::endl;
+                    ParseError(line, "Run-Time: Invalid2 Arithmetic Operation");
+                    errorsFound = true;
+                }
+                else
+                    accumulator = accumulator * current;
+            }
+            else if (operation == 1) {
+                if (accumulator.IsStr() || current.IsStr()) {
+                    ParseError(line, "Run-Time: Invalid1 Arithmetic Operation");
+                    errorsFound = true;
+                }
+                else
+                    accumulator = accumulator / current;
+            }
+            // std::cout << "Term Accumulater: " << current << std::endl;
+            // std::cout << std::endl;
         }
 
         LexItem item = Parser::GetNextToken(in, line);
@@ -390,6 +445,14 @@ bool Factor(istream& in, int& line, Value &retVal) {
     LexItem item = Parser::GetNextToken(in, line);
     bool errorsFound = false;
     const int lineNumber = item.GetLinenum();
+
+    auto iterator = symbolTable.begin();
+    while (iterator != symbolTable.end()) {
+        // std::cout << "Symbol: " << iterator->first << " " << iterator->second << std::endl;
+        iterator++;
+    }
+
+
     switch (item.GetToken()) {
         case ERR:
             item = Parser::GetNextToken(in, line);
@@ -400,15 +463,19 @@ bool Factor(istream& in, int& line, Value &retVal) {
             return true;
         case IDENT:
             Parser::PushBackToken(item);
+            retVal = symbolTable[item.GetLexeme()];
             return Var(in, line, item);
         case ICONST:
             g_valCheck = false;
+            retVal = Value(std::stoi(item.GetLexeme()));
             return false;
         case RCONST:
             g_valCheck = false;
+            retVal = Value(std::stof(item.GetLexeme()));
             return false;
         case SCONST:
             g_valCheck = false;
+            retVal = Value(item.GetLexeme());
             return false;
         case LPAREN:
             g_valCheck = false;
