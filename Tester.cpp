@@ -13,6 +13,7 @@
 
 bool g_valCheck = false;
 bool g_print = true;
+bool g_lprint = true;
 
 int main(int argc, char** argv) {
     if (argc == 2) {
@@ -137,7 +138,7 @@ bool PrintStmt(istream& in, int& line) {
     LexItem item = Parser::GetNextToken(in, line);
     // std::cout << "Should we print? " << g_print << std::endl;
     // std::cout << "What is the parser?" << item << std::endl;
-    if (g_print) {
+    if (g_print && g_lprint) {
         // std::cout << "\n=== PRINTING ===" << std::endl;
         while (g_print && !(*ValQue).empty()) {
             std::cout << ValQue->front();
@@ -147,6 +148,7 @@ bool PrintStmt(istream& in, int& line) {
         // std::cout << "\n=== PRINTING ===\n" << std::endl;
     }
     Parser::PushBackToken(item);
+    g_lprint = true;
     return false;
 }
 
@@ -182,6 +184,11 @@ bool IfStmt(istream& in, int& line) {
         // std::cout << expressionValue.IsErr() << std::endl;
         ParseError(line, "Run-Time: Non Integer If Statement Expression");
         errorsFound = true;
+    }
+    else {
+        if (expressionValue.GetInt() == 0)
+            g_lprint = false;
+
     }
 
     item = Parser::GetNextToken(in, line);
